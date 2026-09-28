@@ -13,8 +13,6 @@ import {
   SkipForward,
   SkipBack,
   Signal,
-  Video,
-  Image as ImageIcon,
   MapPin,
 } from 'lucide-react';
 import { RADIO_STATIONS, RADIO_SPONSOR_ADS } from '../data/radioData';
@@ -206,16 +204,12 @@ export function RadioPlayer({
             {/* Top Header Row within Player Stage */}
             <div className="w-full flex items-center justify-between pb-2 sm:pb-3 border-b border-white/10 text-xs">
               <div className="flex items-center gap-2">
-                <span className="bg-red-600 text-white text-[10px] font-black uppercase px-2.5 py-0.5 rounded shadow flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                  <span>SPONSOR SHOWCASE</span>
-                </span>
-                <span className="text-neutral-300 font-semibold hidden sm:inline">
-                  {currentAd.title}
+                <span className="text-neutral-300 font-semibold text-xs sm:text-sm">
+                  Radio for you!
                 </span>
               </div>
 
-              {/* Autoplay & Ad Switcher controls */}
+              {/* Autoplay & Minimize controls */}
               <div className="flex items-center gap-2">
                 {/* Autoplay status toggle */}
                 <button
@@ -231,28 +225,6 @@ export function RadioPlayer({
                   <span className={`w-1.5 h-1.5 rounded-full ${isAutoPlayEnabled && !isAdPaused ? 'bg-emerald-400 animate-ping' : 'bg-neutral-500'}`} />
                   <span>{isAutoPlayEnabled ? (isAdPaused ? 'Paused' : 'Autoplay ON') : 'Autoplay OFF'}</span>
                 </button>
-
-                {/* Ad Switcher pills */}
-                <div className="flex items-center gap-1.5 bg-neutral-900 border border-neutral-700/80 rounded-full p-1">
-                  {RADIO_SPONSOR_ADS.map((ad, idx) => (
-                    <button
-                      key={ad.id}
-                      type="button"
-                      onClick={() => {
-                        setAdProgress(0);
-                        setActiveAdIndex(idx);
-                      }}
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                        activeAdIndex === idx
-                          ? 'bg-[#00a8e1] text-white shadow'
-                          : 'text-neutral-400 hover:text-white'
-                      }`}
-                    >
-                      {ad.type === 'video' ? <Video className="w-3 h-3" /> : <ImageIcon className="w-3 h-3" />}
-                      <span>{ad.type === 'video' ? 'Video Ad' : `Ad ${idx + 1}`}</span>
-                    </button>
-                  ))}
-                </div>
 
                 {/* Top Quick Minimize Button */}
                 <button
@@ -552,7 +524,7 @@ export function RadioPlayer({
           {/* Stream Error Notice if stream URL blocked */}
           {streamError && (
             <div className="bg-red-950/80 border-t border-red-500/30 px-4 py-1.5 text-center text-xs text-red-300 flex items-center justify-center gap-2">
-              <span>Broadcaster stream offline or restricted by CORS. Retrying automated relay...</span>
+              <span>Broadcaster stream offline, Retrying...</span>
               <button
                 type="button"
                 onClick={handleNextStation}

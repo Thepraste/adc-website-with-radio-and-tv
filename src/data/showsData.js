@@ -101,8 +101,6 @@ export const heroShows = [
 export const onNowShows = [
   {
     id: 'on-now-crbc',
-    streamUrl: 'https://media.dnwayne.org:9443/afdc/_definst_/crbc.stream/playlist.m3u8',
-    liveUrl: 'https://media.dnwayne.org:9443/afdc/_definst_/crbc.stream/playlist.m3u8',
     youtubeId: 'BAhn-P035_M',
     youtubeUrl: 'https://www.youtube.com/watch?v=BAhn-P035_M',
     title: 'CRBC TV Calabar',

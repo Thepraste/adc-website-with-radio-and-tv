@@ -204,8 +204,6 @@ export function MovieDetailModal({
                 {activeMovie.title}
               </h2>
               <div className="flex items-center gap-2 sm:gap-3 text-xs text-neutral-300 font-medium flex-wrap mt-1.5">
-                <span className="text-emerald-400 font-bold">{activeMovie.matchScore || 98}% Match</span>
-                <span>{activeMovie.year || 2026}</span>
                 <span className="border border-neutral-700 px-1.5 py-0.5 rounded text-[10px] text-neutral-200">
                   {activeMovie.rating || '13+'}
                 </span>

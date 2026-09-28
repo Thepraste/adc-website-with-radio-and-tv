@@ -43,7 +43,7 @@ export function AdcNav({
       {/* 1. MOBILE TOP HEADER: Centered logo on black background matching bottom mobile nav */}
       <header
         aria-label="Mobile Top Header"
-        className="sm:hidden fixed top-0 left-0 right-0 z-40 bg-black/95 backdrop-blur-xl border-b border-white/10 px-4 py-2 flex items-center justify-center shadow-[0_8px_25px_rgba(0,0,0,0.9)] supports-[backdrop-filter]:bg-black/85 h-12"
+        className="sm:hidden fixed top-0 left-0 right-0 z-40 bg-black/95 backdrop-blur-xl border-b border-white/10 px-4 py-2 flex items-center justify-center shadow-[0_8px_25px_rgba(0,0,0,0.9)] supports-[backdrop-filter]:bg-black/85 h-15"
       >
         <button
           type="button"
@@ -53,7 +53,7 @@ export function AdcNav({
           id="adc-brand-logo-mobile"
         >
           <AdcLogo
-            className="h-7 w-auto drop-shadow-md"
+            className="h-12 w-auto drop-shadow-md"
             showText={true}
           />
         </button>
@@ -61,7 +61,7 @@ export function AdcNav({
 
       {/* 2. DESKTOP / TABLET TOP HEADER: Glassmorphic translucent blur overlaid on hero */}
       <header
-        className={`hidden sm:block fixed top-0 left-0 right-0 z-40 text-white px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 select-none transition-all duration-300 border-b border-white/10 ${
+        className={`hidden sm:block fixed top-0 left-0 right-0 z-40 text-white px-4 sm:px-6 md:px-8 py-2 sm:py-3 select-none transition-all duration-300 border-b border-white/10 ${
           isScrolled
             ? 'bg-black/85 backdrop-blur-xl shadow-2xl shadow-black/80'
             : 'bg-black/35 backdrop-blur-md shadow-lg shadow-black/40'

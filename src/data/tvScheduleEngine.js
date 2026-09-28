@@ -18,22 +18,25 @@ export function formatWatTime(date) {
 }
 
 // 24-Hour Full Day Schedules (00:00 - 24:00) for all channels
+const LEASED_CHANNEL_SCHEDULE = [
+  { startMinutes: 0, endMinutes: 120, timeSlot: '12:00 AM - 2:00 AM', time: '12:00 AM', durationSpan: 2, title: 'Midnight Cultural Archive & Global Diaspora Voices', description: 'Curated historical and cultural documentaries celebrating African civilization, diaspora heritage, and grassroots community narratives.' },
+  { startMinutes: 120, endMinutes: 240, timeSlot: '2:00 AM - 4:00 AM', time: '2:00 AM', durationSpan: 2, title: 'Pan-African Educational & Independent Cinema', description: 'Independent student films, educational lectures, and creative works from universities across the diaspora.' },
+  { startMinutes: 240, endMinutes: 360, timeSlot: '4:00 AM - 6:00 AM', time: '4:00 AM', durationSpan: 2, title: 'Early Dawn Civic & Faith Forum', description: 'Multi-faith community addresses, peaceful inter-religious dialogue, and civic awakening messages.' },
+  { startMinutes: 360, endMinutes: 480, timeSlot: '6:00 AM - 8:00 AM', time: '6:00 AM', durationSpan: 2, title: 'ADC Morning Community Horizon', description: 'Morning discussions highlighting diaspora entrepreneurs, community health clinics, and grassroots organizing.' },
+  { startMinutes: 480, endMinutes: 600, timeSlot: '8:00 AM - 10:00 AM', time: '8:00 AM', durationSpan: 2, title: 'Public Access Spotlight: Independent Producers', description: 'Showcasing unreleased pilot episodes, local documentary projects, and public advocacy broadcasts.' },
+  { startMinutes: 600, endMinutes: 720, timeSlot: '10:00 AM - 12:00 PM', time: '10:00 AM', durationSpan: 2, title: 'Diaspora Business & Tech Hub Naija', description: 'Conversations with African tech founders, fintech innovators, cross-continental trade champions, and angel investors.' },
+  { startMinutes: 720, endMinutes: 840, timeSlot: '12:00 PM - 2:00 PM', time: '12:00 PM', durationSpan: 2, title: 'Midday Civic Forum & Open Townhall', description: 'Live interactive call-in townhall on immigration policies, consular affairs, and dual-citizenship integration.' },
+  { startMinutes: 840, endMinutes: 960, timeSlot: '2:00 PM - 4:00 PM', time: '2:00 PM', durationSpan: 2, title: 'Afro-Indie Sounds & Spoken Word Naija', description: 'Acoustic musical sets, spoken word poetry, and visual arts from emerging talents in Lagos, London, and New York.' },
+  { startMinutes: 960, endMinutes: 1080, timeSlot: '4:00 PM - 6:00 PM', time: '4:00 PM', durationSpan: 2, title: 'Youth Perspectives: Next Generation Africa', description: 'Youth leaders discuss creative technology, sports development, climate resilience, and community activism.' },
+  { startMinutes: 1080, endMinutes: 1200, timeSlot: '6:00 PM - 8:00 PM', time: '6:00 PM', durationSpan: 2, title: 'ADC Evening Documentary Showcase', description: 'Feature-length investigative and historical documentaries exploring continental history and Pan-African achievements.' },
+  { startMinutes: 1200, endMinutes: 1290, timeSlot: '8:00 PM - 9:30 PM', time: '8:00 PM', durationSpan: 1.5, title: 'ADC Leased Access: Independent Producers & Community Voice', description: 'Dedicated independent and public leased programming serving community voices, civic forums, and cultural organizations.' },
+  { startMinutes: 1290, endMinutes: 1350, timeSlot: '9:30 PM - 10:30 PM', time: '9:30 PM', durationSpan: 1, title: 'Diaspora Filmmakers & Indie Showcase', description: 'Spotlighting independent short films, cultural essays, and creative talents from the pan-African diaspora.' },
+  { startMinutes: 1350, endMinutes: 1440, timeSlot: '10:30 PM - 12:00 AM', time: '10:30 PM', durationSpan: 1.5, title: 'Community Forum & Midnight Cultural Archive', description: 'Open microphone civic broadcast platform addressing community health, diaspora trade, and cultural preservation.' }
+];
+
 export const CHANNEL_24H_SCHEDULES = {
-  'leased-access-channel': [
-    { startMinutes: 0, endMinutes: 120, timeSlot: '12:00 AM - 2:00 AM', time: '12:00 AM', durationSpan: 2, title: 'Midnight Cultural Archive & Global Diaspora Voices', description: 'Curated historical and cultural documentaries celebrating African civilization, diaspora heritage, and grassroots community narratives.' },
-    { startMinutes: 120, endMinutes: 240, timeSlot: '2:00 AM - 4:00 AM', time: '2:00 AM', durationSpan: 2, title: 'Pan-African Educational & Independent Cinema', description: 'Independent student films, educational lectures, and creative works from universities across the diaspora.' },
-    { startMinutes: 240, endMinutes: 360, timeSlot: '4:00 AM - 6:00 AM', time: '4:00 AM', durationSpan: 2, title: 'Early Dawn Civic & Faith Forum', description: 'Multi-faith community addresses, peaceful inter-religious dialogue, and civic awakening messages.' },
-    { startMinutes: 360, endMinutes: 480, timeSlot: '6:00 AM - 8:00 AM', time: '6:00 AM', durationSpan: 2, title: 'ADC Morning Community Horizon', description: 'Morning discussions highlighting diaspora entrepreneurs, community health clinics, and grassroots organizing.' },
-    { startMinutes: 480, endMinutes: 600, timeSlot: '8:00 AM - 10:00 AM', time: '8:00 AM', durationSpan: 2, title: 'Public Access Spotlight: Independent Producers', description: 'Showcasing unreleased pilot episodes, local documentary projects, and public advocacy broadcasts.' },
-    { startMinutes: 600, endMinutes: 720, timeSlot: '10:00 AM - 12:00 PM', time: '10:00 AM', durationSpan: 2, title: 'Diaspora Business & Tech Hub Naija', description: 'Conversations with African tech founders, fintech innovators, cross-continental trade champions, and angel investors.' },
-    { startMinutes: 720, endMinutes: 840, timeSlot: '12:00 PM - 2:00 PM', time: '12:00 PM', durationSpan: 2, title: 'Midday Civic Forum & Open Townhall', description: 'Live interactive call-in townhall on immigration policies, consular affairs, and dual-citizenship integration.' },
-    { startMinutes: 840, endMinutes: 960, timeSlot: '2:00 PM - 4:00 PM', time: '2:00 PM', durationSpan: 2, title: 'Afro-Indie Sounds & Spoken Word Naija', description: 'Acoustic musical sets, spoken word poetry, and visual arts from emerging talents in Lagos, London, and New York.' },
-    { startMinutes: 960, endMinutes: 1080, timeSlot: '4:00 PM - 6:00 PM', time: '4:00 PM', durationSpan: 2, title: 'Youth Perspectives: Next Generation Africa', description: 'Youth leaders discuss creative technology, sports development, climate resilience, and community activism.' },
-    { startMinutes: 1080, endMinutes: 1200, timeSlot: '6:00 PM - 8:00 PM', time: '6:00 PM', durationSpan: 2, title: 'ADC Evening Documentary Showcase', description: 'Feature-length investigative and historical documentaries exploring continental history and Pan-African achievements.' },
-    { startMinutes: 1200, endMinutes: 1290, timeSlot: '8:00 PM - 9:30 PM', time: '8:00 PM', durationSpan: 1.5, title: 'ADC Leased Access: Independent Producers & Community Voice', description: 'Dedicated independent and public leased programming serving community voices, civic forums, and cultural organizations.' },
-    { startMinutes: 1290, endMinutes: 1350, timeSlot: '9:30 PM - 10:30 PM', time: '9:30 PM', durationSpan: 1, title: 'Diaspora Filmmakers & Indie Showcase', description: 'Spotlighting independent short films, cultural essays, and creative talents from the pan-African diaspora.' },
-    { startMinutes: 1350, endMinutes: 1440, timeSlot: '10:30 PM - 12:00 AM', time: '10:30 PM', durationSpan: 1.5, title: 'Community Forum & Midnight Cultural Archive', description: 'Open microphone civic broadcast platform addressing community health, diaspora trade, and cultural preservation.' }
-  ],
+  'leased-channel': LEASED_CHANNEL_SCHEDULE,
+  'leased-access-channel': LEASED_CHANNEL_SCHEDULE,
 
   'crbc': [
     { startMinutes: 0, endMinutes: 120, timeSlot: '12:00 AM - 2:00 AM', time: '12:00 AM', durationSpan: 2, title: 'Voice of the South-South & Niger Delta Rhythms', description: 'Late night regional documentary and traditional musical performances from Cross River State and the Niger Delta.' },
