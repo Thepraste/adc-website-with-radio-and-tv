@@ -536,12 +536,11 @@ const NIGERIAN_CHANNELS = [
 function FallbackStationLogo({ channel }) {
   const id = channel.id;
 
-  if (id === 'leased-access-channel') {
+  if (id === 'leased-channel') {
     return (
       <div className="w-full h-full rounded-lg bg-gradient-to-br from-indigo-950 via-purple-950 to-slate-900 flex flex-col items-center justify-center text-center p-1 border border-amber-500/40 shadow-inner">
         <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest leading-none">LEASED</span>
-        <span className="text-xs font-black text-white tracking-wider mt-0.5">ACCESS</span>
-        <span className="text-[7.5px] uppercase tracking-wider text-neutral-300 mt-0.5">CHANNEL 01</span>
+        <span className="text-[7.5px] uppercase tracking-wider text-neutral-300 mt-0.5">CHANNEL</span>
       </div>
     );
   }
