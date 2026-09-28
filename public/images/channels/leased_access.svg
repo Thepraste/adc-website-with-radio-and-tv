@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e1b4b" />
+      <stop offset="50%" stop-color="#312e81" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#ef4444" />
+    </linearGradient>
+  </defs>
+  <rect width="400" height="240" rx="16" fill="url(#bg)" />
+  <!-- Signal Tower Icon -->
+  <circle cx="200" cy="75" r="10" fill="#f59e0b" />
+  <path d="M 175 75 A 25 25 0 0 1 225 75" fill="none" stroke="#f59e0b" stroke-width="5" stroke-linecap="round" />
+  <path d="M 155 75 A 45 45 0 0 1 245 75" fill="none" stroke="#f59e0b" stroke-width="4" stroke-linecap="round" opacity="0.8" />
+  <path d="M 135 75 A 65 65 0 0 1 265 75" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round" opacity="0.5" />
+  <!-- Text Badges -->
+  <text x="200" y="142" font-family="system-ui, -apple-system, sans-serif" font-weight="900" font-size="28" fill="#ffffff" text-anchor="middle" letter-spacing="3">LEASED ACCESS</text>
+  <rect x="110" y="165" width="180" height="32" rx="16" fill="url(#accent)" />
+  <text x="200" y="186" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="14" fill="#ffffff" text-anchor="middle" letter-spacing="2">CHANNEL 01</text>
+</svg>

@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 180" width="100%" height="100%">
+  <!-- Left Broadcast Wave Arcs -->
+  <!-- Outer Red Arc -->
+  <path
+    d="M 68 18 A 108 108 0 0 0 68 162"
+    fill="none"
+    stroke="#E60000"
+    stroke-width="10"
+    stroke-linecap="round"
+  />
+
+  <!-- Middle Red Arc -->
+  <path
+    d="M 94 36 A 84 84 0 0 0 94 144"
+    fill="none"
+    stroke="#E60000"
+    stroke-width="9"
+    stroke-linecap="round"
+  />
+
+  <!-- Inner Green Arc -->
+  <path
+    d="M 120 54 A 60 60 0 0 0 120 126"
+    fill="none"
+    stroke="#00A859"
+    stroke-width="8"
+    stroke-linecap="round"
+  />
+
+  <!-- Central Circular Badge -->
+  <circle
+    cx="178"
+    cy="90"
+    r="48"
+    fill="#111111"
+    stroke="#00A859"
+    stroke-width="8"
+  />
+
+  <!-- ADC Bold White Center Text -->
+  <text
+    x="178"
+    y="93"
+    fill="#FFFFFF"
+    font-size="36"
+    font-weight="900"
+    font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+    text-anchor="middle"
+    dominant-baseline="central"
+    letter-spacing="-0.04em"
+  >ADC</text>
+
+  <!-- Right Side Stacked Outlined Text: AFRICAN / DIASPORA / CHANNELS -->
+  <g
+    font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Montserrat', sans-serif"
+    font-weight="500"
+    font-size="32"
+    letter-spacing="0.08em"
+    stroke="#FFFFFF"
+    stroke-width="1.2"
+    fill="#FFFFFF"
+    fill-opacity="0.04"
+    stroke-linejoin="round"
+  >
+    <text x="246" y="62">AFRICAN</text>
+    <text x="246" y="100">DIASPORA</text>
+    <text x="246" y="138">CHANNELS</text>
+  </g>
+</svg>

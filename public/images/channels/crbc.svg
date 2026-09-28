@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="100%" height="100%">
+  <defs>
+    <!-- Gradients matching the CRBC logo -->
+    <linearGradient id="crbcBlueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a3262"/>
+      <stop offset="100%" stop-color="#144d8b"/>
+    </linearGradient>
+    <linearGradient id="crbcOrangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f57c00"/>
+      <stop offset="100%" stop-color="#eb5a0c"/>
+    </linearGradient>
+    <linearGradient id="waveTopGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0a3262"/>
+      <stop offset="50%" stop-color="#195ba5"/>
+      <stop offset="100%" stop-color="#0e3d74"/>
+    </linearGradient>
+    <linearGradient id="waveBottomGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4ea3ea"/>
+      <stop offset="100%" stop-color="#82c4f8"/>
+    </linearGradient>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Clean circular white background badge matching the uploaded emblem -->
+  <circle cx="200" cy="200" r="190" fill="#ffffff" stroke="#e2e8f0" stroke-width="4"/>
+
+  <g transform="translate(200, 200)">
+    <!-- 1. Outer Circular Ring with Left & Right Cutout Gaps -->
+    <!-- Top Arc (from 195 deg to -15 deg) -->
+    <path d="M -135,-38 A 140 140 0 1 1 135,-38" 
+          fill="none" 
+          stroke="url(#crbcBlueGrad)" 
+          stroke-width="14" 
+          stroke-linecap="round"/>
+    
+    <!-- Bottom Arc (from 165 deg to 15 deg) -->
+    <path d="M -135,38 A 140 140 0 0 0 135,38" 
+          fill="none" 
+          stroke="url(#crbcBlueGrad)" 
+          stroke-width="14" 
+          stroke-linecap="round"/>
+
+    <!-- 2. Left Broadcast Signal Arcs -->
+    <path d="M -156,-18 A 24 24 0 0 0 -156,18" 
+          fill="none" 
+          stroke="#144d8b" 
+          stroke-width="8" 
+          stroke-linecap="round"/>
+    <path d="M -168,-32 A 44 44 0 0 0 -168,32" 
+          fill="none" 
+          stroke="#144d8b" 
+          stroke-width="7" 
+          stroke-linecap="round"/>
+
+    <!-- 3. Right Broadcast Signal Arcs -->
+    <path d="M 156,-18 A 24 24 0 0 1 156,18" 
+          fill="none" 
+          stroke="#144d8b" 
+          stroke-width="8" 
+          stroke-linecap="round"/>
+    <path d="M 168,-32 A 44 44 0 0 1 168,32" 
+          fill="none" 
+          stroke="#144d8b" 
+          stroke-width="7" 
+          stroke-linecap="round"/>
+
+    <!-- 4. Central Acronym: CRBC -->
+    <g transform="translate(-115, 20)">
+      <!-- Letter C -->
+      <path d="M 44,-42 C 41,-48 34,-52 24,-52 C 9,-52 -4,-38 -4,-16 C -4,6 9,20 24,20 C 34,20 41,16 44,10 L 32,4 C 30,8 27,10 23,10 C 15,10 8,2 8,-16 C 8,-34 15,-42 23,-42 C 27,-42 30,-40 32,-36 Z" 
+            fill="url(#crbcBlueGrad)"/>
+
+      <!-- Letter R -->
+      <path d="M 48,-50 L 76,-50 C 90,-50 99,-42 99,-28 C 99,-18 92,-10 82,-7 L 101,18 L 86,18 L 70,-6 L 62,-6 L 62,18 L 48,18 Z M 62,-38 L 62,-18 L 74,-18 C 80,-18 84,-22 84,-28 C 84,-34 80,-38 74,-38 Z" 
+            fill="url(#crbcBlueGrad)"/>
+
+      <!-- Stylized Cross River Wave running across the R to B junction -->
+      <path d="M 64,2 C 78,-16 95,8 116,-8 C 122,-12 128,-14 134,-10 C 124,-4 116,14 96,2 C 84,-5 74,4 64,2 Z" 
+            fill="url(#waveTopGrad)"/>
+      <path d="M 66,7 C 80,-9 97,13 118,-3 C 123,-7 127,-8 132,-5 C 123,0 117,17 98,6 C 86,0 76,9 66,7 Z" 
+            fill="url(#waveBottomGrad)"/>
+
+      <!-- Letter B -->
+      <path d="M 108,-50 L 134,-50 C 146,-50 154,-44 154,-34 C 154,-27 150,-22 142,-20 C 152,-18 156,-12 156,-3 C 156,9 146,18 132,18 L 108,18 Z M 122,-38 L 122,-24 L 132,-24 C 137,-24 140,-26 140,-31 C 140,-36 137,-38 132,-38 Z M 122,-14 L 122,6 L 133,6 C 138,6 142,4 142,-4 C 142,-12 138,-14 133,-14 Z" 
+            fill="url(#crbcOrangeGrad)"/>
+
+      <!-- Letter C -->
+      <path d="M 204,-42 C 201,-48 194,-52 184,-52 C 169,-52 156,-38 156,-16 C 156,6 169,20 184,20 C 194,20 201,16 204,10 L 192,4 C 190,8 187,10 183,10 C 175,10 168,2 168,-16 C 168,-34 175,-42 183,-42 C 187,-42 190,-40 192,-36 Z" 
+            fill="url(#crbcOrangeGrad)"/>
+    </g>
+
+    <!-- 5. Subtitle: CROSS RIVER BROADCASTING CORPORATION -->
+    <text x="0" y="54" 
+          text-anchor="middle" 
+          fill="#0a3262" 
+          font-family="'Montserrat', 'Arial Black', -apple-system, sans-serif" 
+          font-weight="900" 
+          font-size="11.5" 
+          letter-spacing="0.8">
+      CROSS RIVER BROADCASTING CORPORATION
+    </text>
+  </g>
+</svg>
