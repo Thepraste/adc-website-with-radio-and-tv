@@ -9,8 +9,8 @@ export const RADIO_STATIONS = [
     country: 'Nigeria',
     tagline: 'Voice of the People’s Paradise',
     category: 'Calabar & Regional',
-    streamUrl: 'https://stream.zeno.fm/4w9w2uy6w2zuv', // Cross River station relay
-    backupStreamUrl: 'https://ice31.securenetsystems.net/COOLFM',
+    streamUrl: 'https://c2.radioboss.fm:9078/stream', // Cross River station relay
+    backupStreamUrl: 'https://c2.radioboss.fm:9078/stream',
     logo: '/images/channels/crbc-logo.png',
     accentColor: '#0ea5e9',
     bgColor: 'from-sky-950 to-neutral-900',
