@@ -41,8 +41,8 @@ const CATEGORIES = [
 // Nigerian TV Stations and schedules matching the screenshot format
 const NIGERIAN_CHANNELS = [
   {
-    id: 'leased-access-channel',
-    name: 'Leased Access Channel',
+    id: 'leased-channel',
+    name: 'Leased Channel',
     shortName: 'Leased Access',
     logoType: 'leased-access',
     logoImg: '/images/channels/leac-logo.png',
