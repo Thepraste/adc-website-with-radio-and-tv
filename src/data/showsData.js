@@ -102,7 +102,7 @@ export const onNowShows = [
   {
     id: 'on-now-crbc',
     youtubeId: 'BAhn-P035_M',
-    youtubeUrl: 'https://www.youtube.com/watch?v=BAhn-P035_M',
+    sreamUrl: 'https://media.dnwayne.org:9443/afdc/_definst_/crbc.stream/playlist.m3u8',
     title: 'CRBC TV Calabar',
     channelName: 'Cross River Broadcasting Corporation',
     category: 'Live TV',
