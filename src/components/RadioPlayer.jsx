@@ -1,0 +1,569 @@
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  X,
+  Radio,
+  ChevronDown,
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  SkipForward,
+  SkipBack,
+  Signal,
+  Video,
+  Image as ImageIcon,
+  MapPin,
+} from 'lucide-react';
+import { RADIO_STATIONS, RADIO_SPONSOR_ADS } from '../data/radioData';
+
+export function RadioPlayer({
+  station,
+  isPlaying,
+  onTogglePlay,
+  onClose,
+  onSelectStation,
+}) {
+  const [volume, setVolume] = useState(0.85);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [streamError, setStreamError] = useState(false);
+  const [activeAdIndex, setActiveAdIndex] = useState(0);
+  const [isVideoAdMuted, setIsVideoAdMuted] = useState(true);
+  const [isAutoPlayEnabled, setIsAutoPlayEnabled] = useState(true);
+  const [isAdPaused, setIsAdPaused] = useState(false);
+  const [adProgress, setAdProgress] = useState(0);
+
+  const audioRef = useRef(null);
+  const videoAdRef = useRef(null);
+  const currentStationIdRef = useRef(null);
+
+  const currentAd = RADIO_SPONSOR_ADS[activeAdIndex] || RADIO_SPONSOR_ADS[0];
+
+  // Ads carousel autoplay timer
+  useEffect(() => {
+    if (isMinimized || !isAutoPlayEnabled || isAdPaused) return;
+
+    // 7.5 seconds for image ads, 11 seconds for video ad
+    const duration = currentAd.type === 'video' ? 11000 : 7500;
+    const intervalStep = 100;
+    let elapsed = 0;
+
+    const timer = setInterval(() => {
+      elapsed += intervalStep;
+      setAdProgress(Math.min(100, (elapsed / duration) * 100));
+
+      if (elapsed >= duration) {
+        elapsed = 0;
+        setAdProgress(0);
+        setActiveAdIndex((prev) => (prev + 1) % RADIO_SPONSOR_ADS.length);
+      }
+    }, intervalStep);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, [isMinimized, isAutoPlayEnabled, isAdPaused, currentAd.type, activeAdIndex]);
+
+  const handlePrevAd = () => {
+    setAdProgress(0);
+    setActiveAdIndex((prev) => (prev > 0 ? prev - 1 : RADIO_SPONSOR_ADS.length - 1));
+  };
+
+  const handleNextAd = () => {
+    setAdProgress(0);
+    setActiveAdIndex((prev) => (prev + 1) % RADIO_SPONSOR_ADS.length);
+  };
+
+  // Safe Audio Stream Setup & Playback management without reload loop
+  useEffect(() => {
+    if (!station || !audioRef.current) return;
+    const audio = audioRef.current;
+
+    // Only update audio source when the station ID actually changes
+    const stationChanged = currentStationIdRef.current !== station.id;
+    if (stationChanged || !audio.src) {
+      currentStationIdRef.current = station.id;
+      setStreamError(false);
+      setIsLoading(true);
+
+      audio.src = station.streamUrl;
+      audio.volume = isMuted ? 0 : volume;
+
+      if (isPlaying) {
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              setIsLoading(false);
+            })
+            .catch((err) => {
+              console.warn('Primary stream playback issue, attempting backup:', err);
+              if (station.backupStreamUrl && audio.src !== station.backupStreamUrl) {
+                audio.src = station.backupStreamUrl;
+                audio.play().catch(() => {
+                  setStreamError(true);
+                  setIsLoading(false);
+                });
+              } else {
+                setStreamError(true);
+                setIsLoading(false);
+              }
+            });
+        }
+      } else {
+        audio.pause();
+        setIsLoading(false);
+      }
+    } else {
+      // Station did NOT change, just handle play / pause toggle
+      if (isPlaying) {
+        if (audio.paused) {
+          setIsLoading(true);
+          const playPromise = audio.play();
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => setIsLoading(false))
+              .catch((err) => {
+                console.warn('Audio resume error:', err);
+                setIsLoading(false);
+              });
+          }
+        }
+      } else {
+        if (!audio.paused) {
+          audio.pause();
+          setIsLoading(false);
+        }
+      }
+    }
+  }, [station?.id, station?.streamUrl, isPlaying]);
+
+  // Volume change sync
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = isMuted ? 0 : volume;
+    }
+  }, [volume, isMuted]);
+
+  if (!station) return null;
+
+  const currentIndex = RADIO_STATIONS.findIndex((s) => s.id === station.id);
+  const handlePrevStation = () => {
+    const prevIndex = currentIndex > 0 ? currentIndex - 1 : RADIO_STATIONS.length - 1;
+    if (onSelectStation) onSelectStation(RADIO_STATIONS[prevIndex]);
+  };
+  const handleNextStation = () => {
+    const nextIndex = currentIndex < RADIO_STATIONS.length - 1 ? currentIndex + 1 : 0;
+    if (onSelectStation) onSelectStation(RADIO_STATIONS[nextIndex]);
+  };
+
+  return (
+    <>
+      <audio
+        ref={audioRef}
+        preload="none"
+        onWaiting={() => setIsLoading(true)}
+        onPlaying={() => {
+          setIsLoading(false);
+          setStreamError(false);
+        }}
+        onError={() => {
+          if (station.backupStreamUrl && audioRef.current?.src !== station.backupStreamUrl) {
+            audioRef.current.src = station.backupStreamUrl;
+            audioRef.current.play().catch(() => {
+              setStreamError(true);
+              setIsLoading(false);
+            });
+          } else {
+            setStreamError(true);
+            setIsLoading(false);
+          }
+        }}
+      />
+
+      {/* Global Radio Stage & Player Container */}
+      <div
+        id="global-radio-player-stage"
+        className={`fixed z-50 select-none transition-all duration-300 ease-in-out ${
+          isMinimized
+            ? 'bottom-0 left-0 right-0 max-h-[88px]'
+            : 'inset-0 bg-black/95 backdrop-blur-2xl flex flex-col justify-between overflow-y-auto'
+        } text-white`}
+      >
+        {/* 1. TOP SPONSOR & AD SHOWCASE STAGE (With Autoplay Carousel) */}
+        {!isMinimized && (
+          <div
+            className="flex-1 w-full max-w-[1920px] mx-auto flex flex-col justify-center items-center px-4 sm:px-8 py-3 sm:py-5 relative min-h-0"
+            onMouseEnter={() => setIsAdPaused(true)}
+            onMouseLeave={() => setIsAdPaused(false)}
+            onTouchStart={() => setIsAdPaused(true)}
+            onTouchEnd={() => setIsAdPaused(false)}
+          >
+            {/* Top Header Row within Player Stage */}
+            <div className="w-full flex items-center justify-between pb-2 sm:pb-3 border-b border-white/10 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="bg-red-600 text-white text-[10px] font-black uppercase px-2.5 py-0.5 rounded shadow flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                  <span>SPONSOR SHOWCASE</span>
+                </span>
+                <span className="text-neutral-300 font-semibold hidden sm:inline">
+                  {currentAd.title}
+                </span>
+              </div>
+
+              {/* Autoplay & Ad Switcher controls */}
+              <div className="flex items-center gap-2">
+                {/* Autoplay status toggle */}
+                <button
+                  type="button"
+                  onClick={() => setIsAutoPlayEnabled(!isAutoPlayEnabled)}
+                  className={`hidden xs:flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-colors cursor-pointer ${
+                    isAutoPlayEnabled
+                      ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                      : 'bg-neutral-800 text-neutral-400 border-neutral-700'
+                  }`}
+                  title={isAutoPlayEnabled ? 'Pause Autoplay' : 'Resume Autoplay'}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${isAutoPlayEnabled && !isAdPaused ? 'bg-emerald-400 animate-ping' : 'bg-neutral-500'}`} />
+                  <span>{isAutoPlayEnabled ? (isAdPaused ? 'Paused' : 'Autoplay ON') : 'Autoplay OFF'}</span>
+                </button>
+
+                {/* Ad Switcher pills */}
+                <div className="flex items-center gap-1.5 bg-neutral-900 border border-neutral-700/80 rounded-full p-1">
+                  {RADIO_SPONSOR_ADS.map((ad, idx) => (
+                    <button
+                      key={ad.id}
+                      type="button"
+                      onClick={() => {
+                        setAdProgress(0);
+                        setActiveAdIndex(idx);
+                      }}
+                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                        activeAdIndex === idx
+                          ? 'bg-[#00a8e1] text-white shadow'
+                          : 'text-neutral-400 hover:text-white'
+                      }`}
+                    >
+                      {ad.type === 'video' ? <Video className="w-3 h-3" /> : <ImageIcon className="w-3 h-3" />}
+                      <span>{ad.type === 'video' ? 'Video Ad' : `Ad ${idx + 1}`}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Top Quick Minimize Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsMinimized(true)}
+                  className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white transition-colors cursor-pointer"
+                  title="Minimize Player Bar"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Autoplay Dynamic Progress Line */}
+            {isAutoPlayEnabled && (
+              <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden mt-1.5">
+                <div
+                  className="h-full bg-gradient-to-r from-red-500 via-[#00a8e1] to-emerald-400 transition-all duration-100 ease-linear rounded-full"
+                  style={{ width: `${adProgress}%` }}
+                />
+              </div>
+            )}
+
+            {/* Central Media Layout with Previous/Next Controls (QR Code removed) */}
+            <div className="flex-1 w-full flex items-center justify-center py-3 my-auto relative">
+              
+              {/* Prev Ad Arrow */}
+              <button
+                type="button"
+                onClick={handlePrevAd}
+                className="hidden sm:flex absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/70 hover:bg-black border border-white/20 text-white items-center justify-center transition-all opacity-80 hover:opacity-100 hover:scale-105 cursor-pointer backdrop-blur-sm shadow-xl"
+                title="Previous Ad"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+
+              {/* Next Ad Arrow */}
+              <button
+                type="button"
+                onClick={handleNextAd}
+                className="hidden sm:flex absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/70 hover:bg-black border border-white/20 text-white items-center justify-center transition-all opacity-80 hover:opacity-100 hover:scale-105 cursor-pointer backdrop-blur-sm shadow-xl"
+                title="Next Ad"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+
+              {/* Center: Ad Poster Image OR Video Player */}
+              <div className="relative max-w-lg lg:max-w-xl w-full flex items-center justify-center mx-auto">
+                {currentAd.type === 'video' && currentAd.videoUrl ? (
+                  /* Video Ad Container */
+                  <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden border border-neutral-700 shadow-2xl bg-black">
+                    <video
+                      key={currentAd.id}
+                      ref={videoAdRef}
+                      src={currentAd.videoUrl}
+                      poster={currentAd.imageUrl}
+                      autoPlay
+                      loop
+                      muted={isVideoAdMuted}
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-2.5 right-2.5 z-20">
+                      <button
+                        type="button"
+                        onClick={() => setIsVideoAdMuted(!isVideoAdMuted)}
+                        className="p-1.5 rounded-full bg-black/75 hover:bg-black text-white text-xs border border-white/20 transition-all cursor-pointer flex items-center gap-1"
+                        title={isVideoAdMuted ? 'Unmute Promo Video' : 'Mute Promo Video'}
+                      >
+                        {isVideoAdMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                        <span className="text-[10px] font-bold">{isVideoAdMuted ? 'Muted' : 'Sound'}</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Image Ad Container */
+                  <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10 group bg-neutral-950 flex items-center justify-center max-h-[56vh]">
+                    <img
+                      key={currentAd.id}
+                      src={currentAd.imageUrl}
+                      alt={currentAd.title}
+                      className="w-full h-auto max-h-[56vh] object-contain rounded-2xl drop-shadow-2xl"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                )}
+              </div>
+
+            </div>
+
+            {/* Bottom Dots Indicator */}
+            <div className="flex items-center justify-center gap-2 pt-1 pb-1">
+              {RADIO_SPONSOR_ADS.map((ad, idx) => (
+                <button
+                  key={ad.id}
+                  type="button"
+                  onClick={() => {
+                    setAdProgress(0);
+                    setActiveAdIndex(idx);
+                  }}
+                  className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                    activeAdIndex === idx
+                      ? 'w-7 bg-[#00a8e1]'
+                      : 'w-2 bg-white/25 hover:bg-white/50'
+                  }`}
+                  title={`Go to ${ad.title}`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 2. DEDICATED BOTTOM RADIO PLAYER BAR */}
+        <div className="w-full bg-[#0d131c] border-t border-neutral-800 shadow-[0_-8px_30px_rgba(0,0,0,0.9)]">
+          {/* Top Thin Status Strip */}
+          <div className="flex items-center justify-between px-3 sm:px-6 py-1 bg-black/60 border-b border-white/5 text-[11px] text-neutral-400">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              <span className="font-black uppercase tracking-wider text-emerald-400">
+                LIVE RADIO BROADCAST
+              </span>
+              <span className="text-neutral-500">•</span>
+              <span className="text-neutral-300 font-bold">
+                {station.frequency} — {station.city}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsMinimized(!isMinimized)}
+                className="text-neutral-400 hover:text-white p-1 rounded transition-colors cursor-pointer flex items-center gap-1 font-semibold text-[11px]"
+                title={isMinimized ? 'Expand Full Ad & Radio Stage' : 'Minimize to Bottom Bar'}
+              >
+                {isMinimized ? (
+                  <>
+                    <ChevronUp className="w-4 h-4" />
+                    <span className="hidden xs:inline">Show Ad Stage</span>
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-4 h-4" />
+                    <span className="hidden xs:inline">Minimize</span>
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="text-neutral-400 hover:text-red-400 p-1 rounded transition-colors cursor-pointer"
+                title="Stop & Close Radio"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Main Controls Bar */}
+          <div className="max-w-[1920px] mx-auto px-3 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-3 sm:gap-6">
+            
+            {/* Left: Station Identity (No logo, No descriptions - Just location) */}
+            <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0 max-w-[42%] sm:max-w-[34%]">
+              {/* Station Badge with Accent Border */}
+              <div
+                className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex flex-col items-center justify-center font-black text-center shadow-lg border-2 flex-shrink-0 relative bg-black/80 px-1"
+                style={{ borderColor: station.accentColor || '#00a8e1' }}
+              >
+                <Radio className="w-4 h-4 text-[#00a8e1] mb-0.5" />
+                <span className="text-[9px] font-black text-white leading-none">
+                  {station.frequency.split(' ')[0]}
+                </span>
+              </div>
+
+              {/* Station Title & Location Only */}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-xs sm:text-sm font-black text-white truncate">
+                    {station.name}
+                  </h4>
+                  <span
+                    className="hidden sm:inline-block text-[10px] font-bold px-1.5 py-0.2 rounded text-white shadow-xs"
+                    style={{ backgroundColor: station.accentColor || '#1d70b8' }}
+                  >
+                    {station.frequency}
+                  </span>
+                </div>
+                <p className="text-[11px] sm:text-xs text-neutral-300 truncate font-semibold flex items-center gap-1 mt-0.5">
+                  <MapPin className="w-3 h-3 text-red-500 flex-shrink-0" />
+                  <span>{station.city}, {station.state}</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Center: Playback Controls & Animated Waveform Equalizer */}
+            <div className="flex flex-col items-center justify-center gap-1 flex-1 max-w-[380px]">
+              <div className="flex items-center gap-3 sm:gap-4">
+                {/* Previous Station */}
+                <button
+                  type="button"
+                  onClick={handlePrevStation}
+                  className="p-1.5 rounded-full text-neutral-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                  title="Previous Radio Station"
+                >
+                  <SkipBack className="w-4 h-4" />
+                </button>
+
+                {/* Big White Circular Play/Pause Button */}
+                <button
+                  type="button"
+                  onClick={onTogglePlay}
+                  disabled={isLoading}
+                  className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white hover:bg-neutral-200 text-black flex items-center justify-center transition-transform active:scale-95 shadow-lg shadow-white/20 cursor-pointer disabled:opacity-60"
+                  title={isPlaying ? 'Pause Station' : 'Play Station'}
+                >
+                  {isLoading ? (
+                    <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                  ) : isPlaying ? (
+                    <Pause className="w-5 h-5 fill-current" />
+                  ) : (
+                    <Play className="w-5 h-5 fill-current ml-0.5" />
+                  )}
+                </button>
+
+                {/* Next Station */}
+                <button
+                  type="button"
+                  onClick={handleNextStation}
+                  className="p-1.5 rounded-full text-neutral-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                  title="Next Radio Station"
+                >
+                  <SkipForward className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Live Waveform Equalizer Animation */}
+              <div className="flex items-center gap-1 h-3 pointer-events-none">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((bar) => (
+                  <div
+                    key={bar}
+                    className={`w-1 rounded-full transition-all duration-200 ${
+                      isPlaying && !isLoading
+                        ? 'bg-emerald-400 animate-pulse'
+                        : 'bg-neutral-600 h-1'
+                    }`}
+                    style={{
+                      height: isPlaying && !isLoading ? `${Math.floor((bar % 5) * 2.2 + 3)}px` : '2px',
+                      animationDelay: `${bar * 100}ms`,
+                      animationDuration: '550ms',
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Right: Volume & Status Badge */}
+            <div className="flex items-center justify-end gap-3 min-w-0">
+              {/* Volume Slider with Cyan Accent */}
+              <div className="hidden sm:flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsMuted(!isMuted)}
+                  className="text-neutral-400 hover:text-white transition-colors cursor-pointer p-1"
+                  title={isMuted ? 'Unmute' : 'Mute'}
+                >
+                  {isMuted || volume === 0 ? (
+                    <VolumeX className="w-4 h-4 text-red-400" />
+                  ) : (
+                    <Volume2 className="w-4 h-4" />
+                  )}
+                </button>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={isMuted ? 0 : volume}
+                  onChange={(e) => {
+                    setVolume(parseFloat(e.target.value));
+                    if (isMuted) setIsMuted(false);
+                  }}
+                  className="w-16 md:w-24 h-1.5 bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-[#00a8e1]"
+                />
+              </div>
+
+              {/* Station Frequency Pill Badge */}
+              <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full text-xs font-mono text-neutral-300">
+                <Signal className="w-3 h-3 text-emerald-400" />
+                <span>128k Live</span>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Stream Error Notice if stream URL blocked */}
+          {streamError && (
+            <div className="bg-red-950/80 border-t border-red-500/30 px-4 py-1.5 text-center text-xs text-red-300 flex items-center justify-center gap-2">
+              <span>Broadcaster stream offline or restricted by CORS. Retrying automated relay...</span>
+              <button
+                type="button"
+                onClick={handleNextStation}
+                className="underline font-bold text-white ml-2 cursor-pointer"
+              >
+                Try Next Station
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}

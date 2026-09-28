@@ -1,0 +1,6 @@
+{
+  "name": "African Diaspora Channels (ADC)",
+  "description": "African Diaspora Channels (ADC) video streaming platform featuring movies, TV shows, and live sports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
