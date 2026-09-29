@@ -336,18 +336,6 @@ export default function AdcStreamingPage() {
                 onSeeMore={(title) => setSelectedCategoryView(title)}
               />
 
-              {/* Row 1.5: "Radio For You" */}
-              <RadioRow
-                title="Radio For You"
-                currentStation={radioStation}
-                isRadioPlaying={isRadioPlaying}
-                onPlayStation={handlePlayStation}
-                onSeeMoreRadio={() => {
-                  setActiveTab('Radio');
-                  setSelectedCategoryView(null);
-                }}
-              />
-
               {/* Row 2: "TV Shows" */}
               <VideoRow
                 title="TV Shows"
@@ -370,7 +358,19 @@ export default function AdcStreamingPage() {
                 onSeeMore={(title) => setSelectedCategoryView(title)}
               />
 
-              {/* Row 4: "Upcoming Events" */}
+              {/* Row 4: "Radio For You" (between Podcasts and Upcoming Events) */}
+              <RadioRow
+                title="Radio For You"
+                currentStation={radioStation}
+                isRadioPlaying={isRadioPlaying}
+                onPlayStation={handlePlayStation}
+                onSeeMoreRadio={() => {
+                  setActiveTab('Radio');
+                  setSelectedCategoryView(null);
+                }}
+              />
+
+              {/* Row 5: "Upcoming Events" */}
               <VideoRow
                 title="Upcoming Events"
                 movies={filteredUpcomingEventsShows}
