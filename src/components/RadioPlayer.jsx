@@ -15,6 +15,7 @@ import {
   Signal,
   MapPin,
 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { RADIO_STATIONS, RADIO_SPONSOR_ADS } from '../data/radioData';
 
 export function RadioPlayer({
@@ -202,35 +203,22 @@ export function RadioPlayer({
             onTouchEnd={() => setIsAdPaused(false)}
           >
             {/* Top Header Row within Player Stage */}
-            <div className="w-full flex items-center justify-between pb-2 sm:pb-3 border-b border-white/10 text-xs">
+            <div className="w-full flex items-center justify-between pb-1.5 text-xs">
               <div className="flex items-center gap-2">
-                <span className="text-neutral-300 font-semibold text-xs sm:text-sm">
+                <span className="text-white/90 font-medium text-xs sm:text-sm tracking-wide">
                   Radio for you!
                 </span>
               </div>
 
-              {/* Autoplay & Minimize controls */}
-              <div className="flex items-center gap-2">
-                {/* Autoplay status toggle */}
-                <button
-                  type="button"
-                  onClick={() => setIsAutoPlayEnabled(!isAutoPlayEnabled)}
-                  className={`hidden xs:flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border transition-colors cursor-pointer ${
-                    isAutoPlayEnabled
-                      ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                      : 'bg-neutral-800 text-neutral-400 border-neutral-700'
-                  }`}
-                  title={isAutoPlayEnabled ? 'Pause Autoplay' : 'Resume Autoplay'}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${isAutoPlayEnabled && !isAdPaused ? 'bg-emerald-400 animate-ping' : 'bg-neutral-500'}`} />
-                  <span>{isAutoPlayEnabled ? (isAdPaused ? 'Paused' : 'Autoplay ON') : 'Autoplay OFF'}</span>
-                </button>
-
-                {/* Top Quick Minimize Button */}
+              {/* City of the radio station & Minimize button */}
+              <div className="flex items-center gap-2.5 sm:gap-3">
+                <span className="font-mono text-xs sm:text-sm md:text-base font-bold text-white tracking-widest uppercase">
+                  Live &ndash; {station?.city || 'Calabar'}
+                </span>
                 <button
                   type="button"
                   onClick={() => setIsMinimized(true)}
-                  className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white transition-colors cursor-pointer"
+                  className="p-1 rounded-full bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white transition-colors cursor-pointer"
                   title="Minimize Player Bar"
                 >
                   <ChevronDown className="w-4 h-4" />
@@ -238,85 +226,119 @@ export function RadioPlayer({
               </div>
             </div>
 
-            {/* Autoplay Dynamic Progress Line */}
-            {isAutoPlayEnabled && (
-              <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden mt-1.5">
-                <div
-                  className="h-full bg-gradient-to-r from-red-500 via-[#00a8e1] to-emerald-400 transition-all duration-100 ease-linear rounded-full"
-                  style={{ width: `${adProgress}%` }}
-                />
-              </div>
-            )}
+            {/* Dynamic Multi-Color Progress Line */}
+            <div className="w-full h-[3px] bg-white/10 rounded-full overflow-hidden mb-3 sm:mb-4">
+              <div
+                className="h-full bg-gradient-to-r from-red-500 via-[#00a8e1] to-emerald-400 transition-all duration-100 ease-linear rounded-full"
+                style={{ width: `${adProgress}%` }}
+              />
+            </div>
 
-            {/* Central Media Layout with Previous/Next Controls (QR Code removed) */}
-            <div className="flex-1 w-full flex items-center justify-center py-3 my-auto relative">
+            {/* Central Media Layout with Prev/Next Controls, Flyer, and QR Code Space */}
+            <div className="flex-1 w-full flex items-center justify-center my-auto relative px-2 sm:px-12">
               
               {/* Prev Ad Arrow */}
               <button
                 type="button"
                 onClick={handlePrevAd}
-                className="hidden sm:flex absolute left-2 md:left-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/70 hover:bg-black border border-white/20 text-white items-center justify-center transition-all opacity-80 hover:opacity-100 hover:scale-105 cursor-pointer backdrop-blur-sm shadow-xl"
+                className="flex absolute left-0 sm:left-2 md:left-6 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/80 hover:bg-black border border-white/20 text-white items-center justify-center transition-all opacity-80 hover:opacity-100 hover:scale-105 cursor-pointer backdrop-blur-sm shadow-xl"
                 title="Previous Ad"
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
 
               {/* Next Ad Arrow */}
               <button
                 type="button"
                 onClick={handleNextAd}
-                className="hidden sm:flex absolute right-2 md:right-6 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/70 hover:bg-black border border-white/20 text-white items-center justify-center transition-all opacity-80 hover:opacity-100 hover:scale-105 cursor-pointer backdrop-blur-sm shadow-xl"
+                className="flex absolute right-0 sm:right-2 md:right-6 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/80 hover:bg-black border border-white/20 text-white items-center justify-center transition-all opacity-80 hover:opacity-100 hover:scale-105 cursor-pointer backdrop-blur-sm shadow-xl"
                 title="Next Ad"
               >
-                <ChevronRight className="w-5 h-5" />
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
 
-              {/* Center: Ad Poster Image OR Video Player */}
-              <div className="relative max-w-lg lg:max-w-xl w-full flex items-center justify-center mx-auto">
-                {currentAd.type === 'video' && currentAd.videoUrl ? (
-                  /* Video Ad Container */
-                  <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden border border-neutral-700 shadow-2xl bg-black">
-                    <video
-                      key={currentAd.id}
-                      ref={videoAdRef}
-                      src={currentAd.videoUrl}
-                      poster={currentAd.imageUrl}
-                      autoPlay
-                      loop
-                      muted={isVideoAdMuted}
-                      playsInline
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute top-2.5 right-2.5 z-20">
-                      <button
-                        type="button"
-                        onClick={() => setIsVideoAdMuted(!isVideoAdMuted)}
-                        className="p-1.5 rounded-full bg-black/75 hover:bg-black text-white text-xs border border-white/20 transition-all cursor-pointer flex items-center gap-1"
-                        title={isVideoAdMuted ? 'Unmute Promo Video' : 'Mute Promo Video'}
-                      >
-                        {isVideoAdMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-                        <span className="text-[10px] font-bold">{isVideoAdMuted ? 'Muted' : 'Sound'}</span>
-                      </button>
+              {/* Center Group: Flyer + QR Code space side by side */}
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 md:gap-10 max-w-4xl mx-auto w-full">
+                
+                {/* 1. Flyer / Video Container */}
+                <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10 group bg-neutral-950 flex items-center justify-center max-w-[460px] lg:max-w-[530px] max-h-[38vh] sm:max-h-[44vh] md:max-h-[48vh]">
+                  {currentAd.type === 'video' && currentAd.videoUrl ? (
+                    /* Video Ad Container */
+                    <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden bg-black">
+                      <video
+                        key={currentAd.id}
+                        ref={videoAdRef}
+                        src={currentAd.videoUrl}
+                        poster={currentAd.imageUrl}
+                        autoPlay
+                        loop
+                        muted={isVideoAdMuted}
+                        playsInline
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-2.5 right-2.5 z-20">
+                        <button
+                          type="button"
+                          onClick={() => setIsVideoAdMuted(!isVideoAdMuted)}
+                          className="p-1.5 rounded-full bg-black/75 hover:bg-black text-white text-xs border border-white/20 transition-all cursor-pointer flex items-center gap-1"
+                          title={isVideoAdMuted ? 'Unmute Promo Video' : 'Mute Promo Video'}
+                        >
+                          {isVideoAdMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                          <span className="text-[10px] font-bold">{isVideoAdMuted ? 'Muted' : 'Sound'}</span>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  /* Image Ad Container */
-                  <div className="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10 group bg-neutral-950 flex items-center justify-center max-h-[56vh]">
+                  ) : (
+                    /* Image Ad Container */
                     <img
                       key={currentAd.id}
                       src={currentAd.imageUrl}
                       alt={currentAd.title}
-                      className="w-full h-auto max-h-[56vh] object-contain rounded-2xl drop-shadow-2xl"
+                      className="w-full h-auto max-h-[38vh] sm:max-h-[44vh] md:max-h-[48vh] object-contain rounded-2xl drop-shadow-2xl"
                       referrerPolicy="no-referrer"
                     />
+                  )}
+                </div>
+
+                {/* 2. Space for the QR Code with "SCAN TO" label underneath */}
+                <div className="flex flex-col items-center justify-center flex-shrink-0">
+                  <div className="bg-white p-2.5 sm:p-3 rounded-xl sm:rounded-2xl shadow-2xl border border-neutral-200/40 flex flex-col items-center">
+                    <QRCodeSVG
+                      value={currentAd.qrUrl || 'https://africandiasporachannels.com'}
+                      size={135}
+                      className="w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36"
+                      bgColor="#ffffff"
+                      fgColor="#000000"
+                      level="M"
+                    />
+                    <div className="w-full bg-white pt-2 pb-0.5 border-t border-neutral-100 flex items-center justify-center">
+                      <span className="font-mono text-xs sm:text-sm font-black text-black tracking-widest uppercase">
+                        {currentAd.qrLabel || 'SCAN TO'}
+                      </span>
+                    </div>
                   </div>
-                )}
+                </div>
+
               </div>
 
             </div>
 
+            {/* Text beneath the flyer carrying details on the ads */}
+            <div className="w-full text-center mt-3 sm:mt-4 space-y-1 font-mono select-text px-4">
+              <div className="text-xs sm:text-sm md:text-base font-bold text-white tracking-widest flex items-center justify-center gap-2 sm:gap-4 flex-wrap">
+                <span>
+                  {currentAd.dateDetail || `${currentAd.date || 'OCT 9'}    |    ${currentAd.time || '10:00pm WAT'}    |    Gate:  ${currentAd.entry || 'Free'}`}
+                </span>
+              </div>
+              <div className="text-xs sm:text-sm md:text-base text-neutral-200 font-bold tracking-widest">
+                <span>
+                  {currentAd.phoneDetail || `${currentAd.phone || '234 916 847 9466'}    or    ${currentAd.altPhone || '234 707 185 8592'}`}
+                </span>
+              </div>
+            </div>
+
             {/* Bottom Dots Indicator */}
-            <div className="flex items-center justify-center gap-2 pt-1 pb-1">
+            <div className="flex items-center justify-center gap-2 pt-2 pb-1">
               {RADIO_SPONSOR_ADS.map((ad, idx) => (
                 <button
                   key={ad.id}
@@ -325,10 +347,10 @@ export function RadioPlayer({
                     setAdProgress(0);
                     setActiveAdIndex(idx);
                   }}
-                  className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                  className={`h-1.5 transition-all cursor-pointer ${
                     activeAdIndex === idx
-                      ? 'w-7 bg-[#00a8e1]'
-                      : 'w-2 bg-white/25 hover:bg-white/50'
+                      ? 'w-7 sm:w-8 bg-[#00a8e1] rounded-full'
+                      : 'w-1.5 sm:w-2 bg-neutral-600 hover:bg-neutral-400 rounded-full'
                   }`}
                   title={`Go to ${ad.title}`}
                 />

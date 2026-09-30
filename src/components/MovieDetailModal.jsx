@@ -9,6 +9,7 @@ import {
   Clock,
   Film,
   Minimize2,
+  Maximize2,
   Tv,
 } from 'lucide-react';
 import { getShowEpisodes, getOtherEpisodes } from '../data/episodesData';
@@ -25,9 +26,27 @@ export function MovieDetailModal({
 }) {
   const [activeMovie, setActiveMovie] = useState(movie);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isModalFullscreen, setIsModalFullscreen] = useState(false);
   const [activeEpisode, setActiveEpisode] = useState(null);
   const [copiedEpisodeId, setCopiedEpisodeId] = useState(null);
+  const [isMobileOrTablet, setIsMobileOrTablet] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(false);
   const modalContainerRef = useRef(null);
+
+  // Monitor device dimensions and orientation
+  useEffect(() => {
+    const handleDeviceCheck = () => {
+      setIsMobileOrTablet(window.innerWidth <= 1024);
+      setIsPortrait(window.innerHeight > window.innerWidth);
+    };
+    handleDeviceCheck();
+    window.addEventListener('resize', handleDeviceCheck);
+    window.addEventListener('orientationchange', handleDeviceCheck);
+    return () => {
+      window.removeEventListener('resize', handleDeviceCheck);
+      window.removeEventListener('orientationchange', handleDeviceCheck);
+    };
+  }, []);
 
   const isLiveStream = Boolean(
     activeMovie?.isLive ||
@@ -37,7 +56,7 @@ export function MovieDetailModal({
   );
 
   // Sync activeMovie whenever incoming movie prop changes
-  // When a live channel or autoPlay is active, start livestream player immediately
+  // When a live channel or autoPlay is active, start livestream player immediately in fullscreen first
   useEffect(() => {
     setActiveMovie(movie);
     const shouldStartLive = Boolean(
@@ -48,6 +67,16 @@ export function MovieDetailModal({
       movie?.duration === 'LIVE NOW'
     );
     setIsPlaying(shouldStartLive);
+    if (shouldStartLive) {
+      setIsModalFullscreen(true);
+      try {
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock('landscape').catch(() => {});
+        }
+      } catch (_) {}
+    } else {
+      setIsModalFullscreen(false);
+    }
     setActiveEpisode(null);
   }, [movie, isOpen, autoPlay]);
 
@@ -118,55 +147,150 @@ export function MovieDetailModal({
   const currentYoutubeId = activeEpisode?.youtubeId || activeMovie.youtubeId;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto">
-      {/* Backdrop overlay */}
-      <div
-        className="fixed inset-0 bg-black/90 backdrop-blur-sm transition-opacity"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Modal Container */}
-      <div
-        ref={modalContainerRef}
-        className="relative w-full max-w-4xl max-h-[92vh] overflow-y-auto bg-black text-white rounded-xl sm:rounded-2xl shadow-2xl border border-neutral-800 z-10 my-auto no-scrollbar scroll-smooth"
-      >
-        {/* Top Close Modal Button */}
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-3 right-3 z-40 p-2 sm:p-2.5 rounded-full bg-black/80 hover:bg-neutral-800 text-white transition-colors cursor-pointer border border-neutral-700 min-h-[44px] min-w-[44px] flex items-center justify-center shadow-lg"
-          aria-label="Close modal"
+    <>
+      {/* Fullscreen Overlay for Live TV Broadcast on Mobile/Tablet (Landscape) */}
+      {isLiveStream && isPlaying && isModalFullscreen && (
+        <div
+          className="fixed bg-black overflow-hidden flex flex-col justify-between"
+          style={
+            isMobileOrTablet && isPortrait
+              ? {
+                  position: 'fixed',
+                  top: 0,
+                  left: '100vw',
+                  width: '100vh',
+                  height: '100vw',
+                  transform: 'rotate(90deg)',
+                  transformOrigin: 'top left',
+                  zIndex: 9999,
+                }
+              : {
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  width: '100vw',
+                  height: '100vh',
+                  zIndex: 9999,
+                }
+          }
         >
-          <X className="w-5 h-5" />
-        </button>
+          {/* Top Control Bar in Fullscreen */}
+          <div className="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-black/90 via-black/40 to-transparent p-3 sm:p-4 flex items-center justify-between pointer-events-auto">
+            <div className="flex items-center gap-2">
+              <span className="bg-red-600 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded shadow flex items-center gap-1.5 tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                LIVE
+              </span>
+              <span className="text-white font-extrabold text-xs sm:text-sm truncate">
+                {activeMovie.channelName || activeMovie.title}
+              </span>
+            </div>
 
-        {/* HEADER: SHOWS VIDEO PLAYER FOR EPISODES OR LIVE CHANNELS */}
-        {isPlaying && (currentYoutubeId || activeMovie.streamUrl) ? (
-          <div className="relative aspect-[16/9] w-full bg-neutral-950 overflow-hidden border-b border-neutral-800 animate-in fade-in duration-300">
-            {/* Control to dismiss/close the player and return to thumbnail list */}
-            <div className="absolute top-3 left-3 z-30 flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={handleClosePlayer}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/85 hover:bg-neutral-800 text-neutral-200 hover:text-white text-xs font-bold border border-neutral-700 transition-colors shadow-lg cursor-pointer min-h-[38px]"
-                title={isLiveStream ? "Show channel info" : "Hide video player and browse episodes"}
+                onClick={() => setIsModalFullscreen(false)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/75 hover:bg-neutral-800 text-white text-xs font-bold border border-white/20 transition-all cursor-pointer shadow-lg active:scale-95"
+                title="Minimize Fullscreen"
               >
-                <Minimize2 className="w-3.5 h-3.5 text-neutral-300" />
-                <span>{isLiveStream ? 'Show Info' : 'Hide Player'}</span>
+                <Minimize2 className="w-3.5 h-3.5" />
+                <span className="hidden xs:inline">Minimize</span>
               </button>
-              
-              <span className="bg-red-600 text-white text-[10px] font-black px-2.5 py-1 rounded shadow uppercase flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                <span>{isLiveStream ? 'LIVE' : `Ep ${activeEpisode?.episodeNumber || 1}`}</span>
-              </span>
-
-              {isLiveStream && (
-                <span className="hidden sm:inline-flex bg-black/85 backdrop-blur-sm text-neutral-200 text-xs font-bold px-2.5 py-1 rounded border border-neutral-700">
-                  {activeMovie.channelName || activeMovie.title}
-                </span>
-              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsModalFullscreen(false);
+                  setIsPlaying(false);
+                  onClose();
+                }}
+                className="p-1.5 sm:p-2 rounded-full bg-black/75 hover:bg-red-600 text-white transition-all cursor-pointer border border-white/20 shadow-lg active:scale-95"
+                title="Close"
+              >
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
             </div>
+          </div>
+
+          <div className="w-full h-full flex items-center justify-center bg-black relative">
+            <LiveStreamPlayer
+              streamUrl={activeMovie.streamUrl}
+              youtubeId={currentYoutubeId}
+              title={activeMovie.title}
+              isLive={true}
+              className="w-full h-full"
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto">
+        {/* Backdrop overlay */}
+        <div
+          className="fixed inset-0 bg-black/90 backdrop-blur-sm transition-opacity"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+
+        {/* Modal Container */}
+        <div
+          ref={modalContainerRef}
+          className="relative w-full max-w-4xl max-h-[92vh] overflow-y-auto bg-black text-white rounded-xl sm:rounded-2xl shadow-2xl border border-neutral-800 z-10 my-auto no-scrollbar scroll-smooth"
+        >
+          {/* Top Close Modal Button */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-3 right-3 z-40 p-2 sm:p-2.5 rounded-full bg-black/80 hover:bg-neutral-800 text-white transition-colors cursor-pointer border border-neutral-700 min-h-[44px] min-w-[44px] flex items-center justify-center shadow-lg"
+            aria-label="Close modal"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {/* HEADER: SHOWS VIDEO PLAYER FOR EPISODES OR LIVE CHANNELS */}
+          {isPlaying && (currentYoutubeId || activeMovie.streamUrl) ? (
+            <div className="relative aspect-[16/9] w-full bg-neutral-950 overflow-hidden border-b border-neutral-800 animate-in fade-in duration-300">
+              {/* Control to dismiss/close the player and return to thumbnail list */}
+              <div className="absolute top-3 left-3 z-30 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleClosePlayer}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/85 hover:bg-neutral-800 text-neutral-200 hover:text-white text-xs font-bold border border-neutral-700 transition-colors shadow-lg cursor-pointer min-h-[38px]"
+                  title={isLiveStream ? "Show channel info" : "Hide video player and browse episodes"}
+                >
+                  <Minimize2 className="w-3.5 h-3.5 text-neutral-300" />
+                  <span>{isLiveStream ? 'Show Info' : 'Hide Player'}</span>
+                </button>
+                
+                {isLiveStream && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsModalFullscreen(true);
+                      try {
+                        if (screen.orientation && screen.orientation.lock) {
+                          screen.orientation.lock('landscape').catch(() => {});
+                        }
+                      } catch (_) {}
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/85 hover:bg-neutral-800 text-neutral-200 hover:text-white text-xs font-bold border border-neutral-700 transition-colors shadow-lg cursor-pointer min-h-[38px]"
+                    title="Fullscreen"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5 text-neutral-300" />
+                    <span>Fullscreen</span>
+                  </button>
+                )}
+
+                <span className="bg-red-600 text-white text-[10px] font-black px-2.5 py-1 rounded shadow uppercase flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                  <span>{isLiveStream ? 'LIVE' : `Ep ${activeEpisode?.episodeNumber || 1}`}</span>
+                </span>
+
+                {isLiveStream && (
+                  <span className="hidden sm:inline-flex bg-black/85 backdrop-blur-sm text-neutral-200 text-xs font-bold px-2.5 py-1 rounded border border-neutral-700">
+                    {activeMovie.channelName || activeMovie.title}
+                  </span>
+                )}
+              </div>
 
             <div className="absolute inset-0 w-full h-full z-20">
               <LiveStreamPlayer
@@ -619,5 +743,6 @@ export function MovieDetailModal({
         </div>
       </div>
     </div>
+    </>
   );
 }

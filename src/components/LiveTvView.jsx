@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Play, 
   Tv, 
@@ -12,6 +12,7 @@ import {
   Star,
   Info,
   Maximize2,
+  Minimize2,
   Calendar,
   Clock,
   Layers,
@@ -684,8 +685,29 @@ export function LiveTvView({ onPlayMovie, onOpenDetails, onShowToast }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeChannel, setActiveChannel] = useState(NIGERIAN_CHANNELS[0]);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [selectedUpcomingProgram, setSelectedUpcomingProgram] = useState(null);
   const [mobileGuideMode, setMobileGuideMode] = useState('cards'); // 'cards' | 'grid'
   const [expandedChannelId, setExpandedChannelId] = useState(null);
+  const [isMobileOrTablet, setIsMobileOrTablet] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(false);
+  const fullscreenContainerRef = useRef(null);
+
+  // Monitor device dimensions and orientation
+  useEffect(() => {
+    const handleDeviceCheck = () => {
+      const isSmall = window.innerWidth <= 1024;
+      setIsMobileOrTablet(isSmall);
+      setIsPortrait(window.innerHeight > window.innerWidth);
+    };
+    handleDeviceCheck();
+    window.addEventListener('resize', handleDeviceCheck);
+    window.addEventListener('orientationchange', handleDeviceCheck);
+    return () => {
+      window.removeEventListener('resize', handleDeviceCheck);
+      window.removeEventListener('orientationchange', handleDeviceCheck);
+    };
+  }, []);
 
   // Synchronize 24-hour schedule with West Africa Time (WAT: UTC+1)
   useEffect(() => {
@@ -726,9 +748,40 @@ export function LiveTvView({ onPlayMovie, onOpenDetails, onShowToast }) {
   const handleTuneIntoChannel = (channel, toastMsg) => {
     setActiveChannel(channel);
     setIsPlaying(true);
+    setIsFullscreen(true); // Always launch in full screen first!
+
+    // Lock orientation to landscape on mobile/tablet if API supported
+    try {
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch(() => {});
+      }
+    } catch (_) {}
+
     if (onShowToast) {
       onShowToast(toastMsg || `Tuned into ${channel.name}`);
     }
+  };
+
+  const handleExitFullscreen = () => {
+    setIsFullscreen(false);
+    try {
+      if (screen.orientation && screen.orientation.unlock) {
+        screen.orientation.unlock();
+      }
+    } catch (_) {}
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.().catch(() => {});
+    }
+  };
+
+  const handleClosePlayer = () => {
+    setIsPlaying(false);
+    setIsFullscreen(false);
+    try {
+      if (screen.orientation && screen.orientation.unlock) {
+        screen.orientation.unlock();
+      }
+    } catch (_) {}
   };
 
   // Video embed URL
@@ -787,8 +840,93 @@ export function LiveTvView({ onPlayMovie, onOpenDetails, onShowToast }) {
         </div>
       </div>
 
-      {/* 2. ACTIVE BROADCAST STREAM PLAYER & TODAY'S PROGRAM SCHEDULE */}
-      {isPlaying && (
+      {/* 2. FULLSCREEN BROADCAST STREAM PLAYER (Landscape on Mobile/Tablet) */}
+      {isPlaying && isFullscreen && (
+        <div
+          ref={fullscreenContainerRef}
+          className="fixed bg-black overflow-hidden flex flex-col justify-between"
+          style={
+            isMobileOrTablet && isPortrait
+              ? {
+                  position: 'fixed',
+                  top: 0,
+                  left: '100vw',
+                  width: '100vh',
+                  height: '100vw',
+                  transform: 'rotate(90deg)',
+                  transformOrigin: 'top left',
+                  zIndex: 9999,
+                }
+              : {
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  width: '100vw',
+                  height: '100vh',
+                  zIndex: 9999,
+                }
+          }
+        >
+          {/* Top Control Bar in Fullscreen */}
+          <div className="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-black/90 via-black/50 to-transparent p-3 sm:p-4 flex items-center justify-between pointer-events-auto">
+            <div className="flex items-center gap-2.5">
+              <span className="bg-red-600 text-white text-[10px] font-black uppercase px-2.5 py-1 rounded shadow flex items-center gap-1.5 tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                LIVE
+              </span>
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded bg-black/60 border border-white/20 p-0.5 overflow-hidden flex items-center justify-center">
+                  <ChannelLogoBadge channel={activeChannel} />
+                </div>
+                <div>
+                  <h3 className="text-xs sm:text-sm font-black text-white truncate max-w-[180px] sm:max-w-md">
+                    {activeChannel.name}
+                  </h3>
+                  <span className="text-[10px] sm:text-xs text-blue-200 font-medium truncate block">
+                    Now: {activeChannelWatData.activeProgram.title} ({activeChannelWatData.activeProgram.timeSlot})
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Exit Fullscreen (Minimize to in-page player) & Close Player buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleExitFullscreen}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/75 hover:bg-neutral-800 text-white text-xs font-bold border border-white/20 transition-all cursor-pointer shadow-lg active:scale-95"
+                title="Exit Fullscreen (Minimize to Guide)"
+              >
+                <Minimize2 className="w-3.5 h-3.5" />
+                <span className="hidden xs:inline">Minimize</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleClosePlayer}
+                className="p-1.5 sm:p-2 rounded-full bg-black/75 hover:bg-red-600 text-white transition-all cursor-pointer border border-white/20 shadow-lg active:scale-95"
+                title="Close Player"
+              >
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Full Screen Video Stream Player */}
+          <div className="w-full h-full flex items-center justify-center bg-black relative">
+            <LiveStreamPlayer
+              streamUrl={activeChannel.streamUrl}
+              youtubeId={activeChannel.videoId}
+              title={`${activeChannel.name} Live Broadcast`}
+              isLive={true}
+              className="w-full h-full"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 2b. IN-PAGE EMBEDDED STREAM PLAYER & TODAY'S PROGRAM SCHEDULE (when minimized / not in fullscreen) */}
+      {isPlaying && !isFullscreen && (
         <div className="max-w-[1920px] mx-auto px-3 sm:px-4 md:px-8 pt-3 sm:pt-4 pb-2 animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="bg-[#0b1c33] rounded-xl border border-blue-400/40 overflow-hidden shadow-2xl">
             <div className="grid grid-cols-1 lg:grid-cols-12">
@@ -802,15 +940,34 @@ export function LiveTvView({ onPlayMovie, onOpenDetails, onShowToast }) {
                   isLive={true}
                 />
 
-                {/* Close player button */}
-                <button
-                  type="button"
-                  onClick={() => setIsPlaying(false)}
-                  className="absolute top-3 right-3 p-2 rounded-full bg-black/75 hover:bg-black text-white hover:text-red-400 transition-colors cursor-pointer backdrop-blur-sm border border-white/10 min-h-[40px] min-w-[40px] flex items-center justify-center z-20"
-                  title="Close Live Player"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                {/* Top Action Buttons (Fullscreen & Close) */}
+                <div className="absolute top-3 right-3 flex items-center gap-2 z-20">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsFullscreen(true);
+                      try {
+                        if (screen.orientation && screen.orientation.lock) {
+                          screen.orientation.lock('landscape').catch(() => {});
+                        }
+                      } catch (_) {}
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/80 hover:bg-neutral-800 text-white text-xs font-bold border border-white/20 transition-all cursor-pointer backdrop-blur-sm shadow-lg active:scale-95"
+                    title="Expand to Full Screen"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                    <span>Fullscreen</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleClosePlayer}
+                    className="p-2 rounded-full bg-black/75 hover:bg-black text-white hover:text-red-400 transition-colors cursor-pointer backdrop-blur-sm border border-white/10 min-h-[38px] min-w-[38px] flex items-center justify-center"
+                    title="Close Live Player"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
 
                 {/* Live stream badge */}
                 <div className="absolute top-3 left-3 pointer-events-none flex items-center gap-1.5 sm:gap-2 z-20">
@@ -890,10 +1047,12 @@ export function LiveTvView({ onPlayMovie, onOpenDetails, onShowToast }) {
                       {activeChannelWatData.upcomingToday.map((prog, pIdx) => (
                         <div
                           key={pIdx}
-                          className="p-2 sm:p-2.5 rounded-lg bg-black/40 border border-white/5 hover:border-blue-400/30 flex items-start justify-between gap-2 text-xs transition-colors"
+                          onClick={() => setSelectedUpcomingProgram({ channel: activeChannel, program: prog })}
+                          className="p-2 sm:p-2.5 rounded-lg bg-black/40 border border-white/5 hover:border-blue-400/30 flex items-start justify-between gap-2 text-xs transition-colors cursor-pointer group"
+                          title={`${prog.title} (${prog.time}) - Click for details`}
                         >
                           <div className="min-w-0 flex-1">
-                            <span className="font-bold text-white block truncate">
+                            <span className="font-bold text-white block truncate group-hover:text-blue-200">
                               {prog.title}
                             </span>
                             <span className="text-[11px] text-neutral-400 line-clamp-1 mt-0.5">
@@ -926,7 +1085,7 @@ export function LiveTvView({ onPlayMovie, onOpenDetails, onShowToast }) {
 
                   <button
                     type="button"
-                    onClick={() => setIsPlaying(false)}
+                    onClick={handleClosePlayer}
                     className="bg-[#164479] hover:bg-[#1e589c] text-blue-100 hover:text-white text-xs font-semibold py-2.5 px-3 rounded-lg border border-blue-400/30 transition-colors cursor-pointer min-h-[40px]"
                   >
                     Hide Player
@@ -1097,13 +1256,14 @@ export function LiveTvView({ onPlayMovie, onOpenDetails, onShowToast }) {
                         {channelWatData.upcomingToday.map((prog, pIdx) => (
                           <div
                             key={pIdx}
-                            onClick={() => handleTuneIntoChannel(channel, `Scheduled: ${prog.title}`)}
-                            className="flex items-center justify-between text-xs p-2 rounded bg-[#0e2d52] hover:bg-[#164375] transition-all cursor-pointer border border-blue-400/10 hover:border-blue-400/40 gap-2"
+                            onClick={() => setSelectedUpcomingProgram({ channel, program: prog })}
+                            className="flex items-center justify-between text-xs p-2 rounded bg-[#0e2d52] hover:bg-[#164375] transition-all cursor-pointer border border-blue-400/10 hover:border-blue-400/40 gap-2 group"
+                            title={`${prog.title} (${prog.time}) - Click for upcoming details`}
                           >
-                            <span className="font-bold text-white truncate flex-1 min-w-0">
+                            <span className="font-bold text-white truncate flex-1 min-w-0 group-hover:text-blue-200">
                               {prog.title}
                             </span>
-                            <span className="text-blue-200 font-mono text-[11px] flex-shrink-0">
+                            <span className="text-blue-200 font-mono text-[11px] flex-shrink-0 bg-blue-950/60 px-1.5 py-0.5 rounded border border-blue-400/20">
                               {prog.time}
                             </span>
                           </div>
@@ -1196,23 +1356,23 @@ export function LiveTvView({ onPlayMovie, onOpenDetails, onShowToast }) {
                     return (
                       <div
                         key={idx}
-                        onClick={() => handleTuneIntoChannel(channel, `Scheduled: ${prog.title}`)}
+                        onClick={() => setSelectedUpcomingProgram({ channel, program: prog })}
                         className={`relative ${widthClass} flex-shrink-0 h-[88px] sm:h-[92px] rounded-lg bg-[#123966] hover:bg-[#1a4f8b] border border-blue-400/20 hover:border-blue-300/70 p-3 flex flex-col justify-between transition-all duration-200 ease-out cursor-pointer shadow-md hover:shadow-2xl hover:shadow-blue-500/30 hover:scale-[1.08] hover:z-30 origin-center group/card overflow-hidden`}
-                        title={`${prog.timeSlot || prog.time} — ${prog.title}`}
+                        title={`${prog.timeSlot || prog.time} — ${prog.title} (Click for upcoming details)`}
                       >
                         <div className="w-full h-full flex flex-col justify-between">
                           <div>
                             <div className="flex items-center justify-between text-xs sm:text-[12.5px] font-bold text-blue-200 tracking-wide mb-1">
                               <span>{prog.time}</span>
-                              <Play className="w-3 h-3 text-[#00a8e1] fill-current opacity-0 group-hover/card:opacity-100 transition-opacity" />
+                              <Info className="w-3 h-3 text-amber-300 opacity-60 group-hover/card:opacity-100 transition-opacity" />
                             </div>
 
-                            <h4 className="text-sm sm:text-[15px] font-bold text-white line-clamp-2 leading-snug group-hover/card:text-white">
+                            <h4 className="text-sm sm:text-[15px] font-bold text-white line-clamp-2 leading-snug group-hover/card:text-blue-100">
                               {prog.title}
                             </h4>
                           </div>
 
-                          <div className="w-full h-[2px] bg-transparent group-hover/card:bg-[#00a8e1] rounded-full transition-colors mt-auto" />
+                          <div className="w-full h-[2px] bg-transparent group-hover/card:bg-amber-400/80 rounded-full transition-colors mt-auto" />
                         </div>
                       </div>
                     );
@@ -1225,6 +1385,93 @@ export function LiveTvView({ onPlayMovie, onOpenDetails, onShowToast }) {
           </div>
         </div>
       </div>
+
+      {/* 6. UPCOMING PROGRAM DETAILS POPUP */}
+      {selectedUpcomingProgram && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div 
+            className="fixed inset-0"
+            onClick={() => setSelectedUpcomingProgram(null)}
+            aria-hidden="true"
+          />
+          <div className="relative w-full max-w-md bg-[#0a1829] border border-blue-400/50 rounded-2xl shadow-2xl p-5 text-white z-10 space-y-4 animate-in zoom-in-95 duration-200">
+            {/* Header: Station info + Close Button */}
+            <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-10 rounded-lg bg-black border border-neutral-700 p-1 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
+                  <ChannelLogoBadge channel={selectedUpcomingProgram.channel} />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm sm:text-base text-white leading-tight">
+                    {selectedUpcomingProgram.channel.name}
+                  </h3>
+                  <span className="text-[11px] text-blue-300 font-medium flex items-center gap-1 mt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span>{selectedUpcomingProgram.channel.shortName} • {selectedUpcomingProgram.channel.country || 'Nigeria'}</span>
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedUpcomingProgram(null)}
+                className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white transition-colors cursor-pointer"
+                title="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Upcoming Program Badge & Time */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <span className="bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase flex items-center gap-1.5 tracking-wider shadow-sm">
+                  <Clock className="w-3 h-3 text-amber-400" />
+                  <span>UPCOMING PROGRAM</span>
+                </span>
+                <span className="text-xs font-mono font-bold text-[#00a8e1] flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>{selectedUpcomingProgram.program.timeSlot || selectedUpcomingProgram.program.time} (WAT)</span>
+                </span>
+              </div>
+
+              <h4 className="text-base sm:text-lg font-black text-white leading-snug">
+                {selectedUpcomingProgram.program.title}
+              </h4>
+
+              {selectedUpcomingProgram.program.description && (
+                <p className="text-xs text-neutral-300 leading-relaxed bg-white/5 p-3 rounded-xl border border-white/10">
+                  {selectedUpcomingProgram.program.description}
+                </p>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="pt-2 flex items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  const ch = selectedUpcomingProgram.channel;
+                  setSelectedUpcomingProgram(null);
+                  handleTuneIntoChannel(ch, `Tuned into ${ch.name}`);
+                }}
+                className="flex-1 bg-white hover:bg-neutral-200 text-black font-extrabold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-lg active:scale-95"
+              >
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>Watch Live Channel Now</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSelectedUpcomingProgram(null)}
+                className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white font-semibold text-xs py-2.5 px-4 rounded-xl transition-all cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
